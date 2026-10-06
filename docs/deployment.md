@@ -1,15 +1,15 @@
 # Diagrama de despliegue — P2 (`docker-compose`)
 
-Lo que levanta `docker compose up -d --build` en `bank-platform`. Todo corre en una red de Docker
+Lo que levanta `docker compose up -d` en `bank-platform`, con las imágenes `hbcordova10/bank-*:latest` de Docker Hub. Todo corre en una red de Docker
 (`bank-platform_default`); desde la máquina se entra por el Gateway (8080). Los puertos de los
 servicios también se publican, solo para pruebas directas y para el panel de Eureka.
 
 ```mermaid
 flowchart LR
     Postman([Postman / cliente HTTP])
+    cfgrepo[("GitHub<br/>bankacme/bank-config")]
 
     subgraph host["Máquina local"]
-        cfgrepo[("bank-config<br/>(repositorio Git)")]
         subgraph net["Red de Docker: bank-platform_default"]
             gw["api-gateway<br/>:8080"]
             eureka["eureka-server<br/>:8761"]
@@ -33,7 +33,7 @@ flowchart LR
     svc -.->|configuración al arrancar| config
     eureka -.->|configuración al arrancar| config
     gw -.->|configuración al arrancar| config
-    config -->|"file:///config-repo (montado, solo lectura)"| cfgrepo
+    config -->|"HTTPS, rama main"| cfgrepo
     acc -->|REST| cust
     acc -->|REST| cred
     cred -->|REST| cust

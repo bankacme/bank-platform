@@ -41,8 +41,8 @@ dependencias entre repositorios: cada uno se prueba y publica solo). Todos sigue
 
 Requisitos:
 - Docker Desktop con unos **6 GB de memoria** (8 servicios Java de 512 MB + Mongo).
-- `../bank-config` al lado de esta carpeta, con sus cambios **commiteados**: el Config Server lo
-  lee como repositorio Git montado (`file:///config-repo`).
+- Los cambios de `bank-config` **subidos a GitHub** (`main`): el Config Server lee la configuración
+  directamente de `github.com/bankacme/bank-config`, igual que desde el IDE.
 
 No mezclar modos: con el sistema completo arriba, los puertos 8080–8085, 8761 y 8888 están en uso y
 un servicio arrancado desde el IDE no levanta. Para volver al IDE:
@@ -79,7 +79,7 @@ Mongo usa `directConnection=true`, así que el `localhost:27017` del replica set
 - Estado: `docker compose ps`
 - Logs de un servicio: `docker compose logs -f account-service`
 - Actualizar a lo último publicado en `main`: `docker compose pull && docker compose up -d`
-- Tras un cambio en `bank-config` (commiteado): `docker compose restart config-server` y luego el servicio
+- Tras un cambio en `bank-config` (con push): `docker compose restart config-server` y luego el servicio
 - Apagar (conserva datos): `docker compose down`
 - Apagar y borrar datos: `docker compose down -v`
 

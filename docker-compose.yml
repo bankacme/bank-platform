@@ -36,11 +36,6 @@ services:
     image: hbcordova10/bank-config-server:latest
     container_name: bank-config-server
     mem_limit: 512m
-    environment:
-      # La carpeta bank-config montada como repositorio Git: sirve lo commiteado en main.
-      CONFIG_GIT_URI: file:///config-repo
-    volumes:
-      - ../bank-config:/config-repo:ro
     ports:
       - "8888:8888"
     healthcheck:
