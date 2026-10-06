@@ -1,3 +1,16 @@
+x-java: &java
+  environment:
+    SPRING_PROFILES_ACTIVE: docker
+    CONFIG_SERVER_URL: http://config-server:8888
+  mem_limit: 512m
+  restart: on-failure:3
+
+x-health: &health
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 40s
+
 services:
   mongo:
     image: mongo:7.0
@@ -18,6 +31,120 @@ services:
       timeout: 10s
       retries: 20
       start_period: 10s
+
+  config-server:
+    image: hbcordova10/bank-config-server:latest
+    container_name: bank-config-server
+    mem_limit: 512m
+    environment:
+      # La carpeta bank-config montada como repositorio Git: sirve lo commiteado en main.
+      CONFIG_GIT_URI: file:///config-repo
+    volumes:
+      - ../bank-config:/config-repo:ro
+    ports:
+      - "8888:8888"
+    healthcheck:
+      <<: *health
+      test: ["CMD", "curl", "-fs", "http://localhost:8888/actuator/health"]
+
+  eureka-server:
+    <<: *java
+    image: hbcordova10/bank-eureka-server:latest
+    container_name: bank-eureka-server
+    ports:
+      - "8761:8761"
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      test: ["CMD", "curl", "-fs", "http://localhost:8761/actuator/health"]
+
+  customer-service:
+    <<: *java
+    image: hbcordova10/bank-customer-service:latest
+    container_name: bank-customer-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      test: ["CMD", "curl", "-fs", "http://localhost:8081/actuator/health"]
+
+  account-service:
+    <<: *java
+    image: hbcordova10/bank-account-service:latest
+    container_name: bank-account-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      test: ["CMD", "curl", "-fs", "http://localhost:8082/actuator/health"]
+
+  credit-service:
+    <<: *java
+    image: hbcordova10/bank-credit-service:latest
+    container_name: bank-credit-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      test: ["CMD", "curl", "-fs", "http://localhost:8083/actuator/health"]
+
+  transaction-service:
+    <<: *java
+    image: hbcordova10/bank-transaction-service:latest
+    container_name: bank-transaction-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      test: ["CMD", "curl", "-fs", "http://localhost:8084/actuator/health"]
+
+  report-service:
+    <<: *java
+    image: hbcordova10/bank-report-service:latest
+    container_name: bank-report-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      test: ["CMD", "curl", "-fs", "http://localhost:8085/actuator/health"]
+
+  api-gateway:
+    <<: *java
+    image: hbcordova10/bank-api-gateway:latest
+    container_name: bank-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      <<: *health
+      test: ["CMD", "curl", "-fs", "http://localhost:8080/actuator/health"]
 
 volumes:
   mongo-data:
